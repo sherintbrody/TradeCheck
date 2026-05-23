@@ -2,414 +2,837 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="TradeCheck" />
+  <meta name="description" content="Professional trading checklist for US30, XAUUSD, NAS100, USOIL" />
+  <title>TradeCheck — Trading Checklist</title>
 
-  <title>TradeCheck - White Mode</title>
+  <!-- PWA Manifest inline -->
+  <script>
+    const manifestData = {
+      name: "TradeCheck — Trading Checklist",
+      short_name: "TradeCheck",
+      description: "Professional trading checklist for US30, XAUUSD, NAS100, USOIL",
+      start_url: "./",
+      display: "standalone",
+      background_color: "#ffffff",
+      theme_color: "#ffffff",
+      orientation: "portrait",
+      icons: [
+        { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%23ffffff'/><text y='130' x='20' font-size='120'>⚡</text></svg>", sizes: "192x192", type: "image/svg+xml" },
+        { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%23ffffff'/><text y='360' x='40' font-size='320'>⚡</text></svg>", sizes: "512x512", type: "image/svg+xml" }
+      ]
+    };
+    const blob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(blob);
+    document.addEventListener('DOMContentLoaded', () => {
+      const link = document.createElement('link');
+      link.rel = 'manifest'; link.href = manifestURL;
+      document.head.appendChild(link);
+    });
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
 
   <style>
-    *{
-      margin:0;
-      padding:0;
-      box-sizing:border-box;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f6fa; --card: #ffffff; --border: #e0e2ef;
+      --green: #05d67a; --red: #ff3d5a; --gold: #e07b00;
+      --blue: #1a7fe8; --purple: #8b3fe0;
+      --text: #0e1018; --dim: #7a7e9a; --dimmer: #edeef5;
+    }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
+    body { padding-bottom: env(safe-area-inset-bottom); }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; }
+    input { font-family: inherit; }
+    ::-webkit-scrollbar { display: none; }
+    scrollbar-width: none;
+
+    /* ── HEADER ── */
+    #header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--card); border-bottom: 1px solid var(--border);
+      padding: 14px 14px 0;
+      padding-top: calc(14px + env(safe-area-inset-top));
+    }
+    #header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    #app-icon {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: linear-gradient(135deg, #ffb830cc, #e07b00);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; box-shadow: 0 4px 12px #ffb83030; flex-shrink: 0;
+    }
+    #app-title { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px; color: var(--text); }
+    #app-sub { font-size: 9px; color: var(--dim); letter-spacing: 2px; margin-top: 2px; }
+    #mode-toggle {
+      display: flex; background: var(--dimmer); border-radius: 100px; padding: 3px; gap: 2px;
+    }
+    .mode-btn {
+      padding: 5px 10px; border-radius: 100px; border: none;
+      font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700;
+      letter-spacing: 0.5px; transition: all 0.2s; color: var(--dim); background: transparent;
+    }
+    .mode-btn.active-intraday { background: var(--blue); color: #fff; }
+    .mode-btn.active-swing { background: var(--purple); color: #fff; }
+
+    /* ── TABS ── */
+    #tabs { display: flex; overflow-x: auto; gap: 0; }
+    .tab-btn {
+      padding: 8px 13px; background: none; border: none; border-bottom: 2px solid transparent;
+      font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 400;
+      letter-spacing: 0.5px; white-space: nowrap; transition: all 0.2s; color: var(--dim);
+    }
+    .tab-btn.active { font-weight: 700; }
+    .tab-btn.active.intraday { border-bottom-color: var(--blue); color: var(--blue); }
+    .tab-btn.active.swing { border-bottom-color: var(--purple); color: var(--purple); }
+
+    /* ── CONTENT ── */
+    #content { padding: 14px 14px 0; }
+
+    /* ── MODE BANNER ── */
+    .mode-banner {
+      border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .mode-banner-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1px; }
+    .mode-banner-sub { font-size: 11px; color: var(--dim); margin-top: 2px; }
+    .mode-banner-tag {
+      font-family: 'JetBrains Mono', monospace; font-size: 10px;
+      padding: 4px 10px; border-radius: 100px;
     }
 
-    :root{
-      --bg:#f5f7fb;
-      --card:#ffffff;
-      --border:#dbe2ea;
+    /* ── CARDS ── */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden; margin-bottom: 14px;
+    }
+    .card-head {
+      padding: 12px 14px; border-bottom: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 2px;
+    }
+    .card-body { padding: 4px 14px 12px; }
 
-      --green:#00a86b;
-      --red:#e63946;
-      --gold:#d97706;
-      --blue:#2563eb;
-      --purple:#7c3aed;
+    /* ── GRADE METER ── */
+    #grade-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px; margin-bottom: 14px;
+    }
+    #grade-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    #grade-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 2px; margin-bottom: 4px; }
+    #grade-letter { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 700; line-height: 1; transition: color 0.3s; }
+    #grade-count { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; color: var(--text); text-align: right; }
+    #grade-pct { font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+    #grade-bar-bg { background: var(--dimmer); border-radius: 4px; height: 6px; overflow: hidden; }
+    #grade-bar { height: 100%; border-radius: 4px; transition: width 0.4s cubic-bezier(.4,0,.2,1), background 0.3s; }
+    #grade-msg { margin-top: 10px; font-size: 11px; }
 
-      --text:#111827;
-      --dim:#6b7280;
-      --dimmer:#e5e7eb;
+    /* ── SL/TP QUICK REF ── */
+    .sltp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .sltp-box { border-radius: 10px; padding: 10px 12px; }
+    .sltp-label { font-size: 9px; letter-spacing: 2px; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; }
+    .sltp-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 14px; color: var(--text); }
+
+    /* ── SECTION DIVIDER ── */
+    .section-divider {
+      display: flex; align-items: center; gap: 8px; padding: 14px 0 8px;
+    }
+    .divider-line { flex: 1; height: 1px; background: var(--border); }
+    .divider-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 2px; font-weight: 700; }
+
+    /* ── CHECK ROW ── */
+    .check-row {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 10px 12px; border-radius: 10px; cursor: pointer;
+      border: 1px solid transparent; margin-bottom: 5px;
+      transition: all 0.18s; user-select: none; -webkit-tap-highlight-color: transparent;
+    }
+    .check-box {
+      width: 20px; height: 20px; border-radius: 5px; flex-shrink: 0; margin-top: 1px;
+      border: 2px solid var(--dimmer);
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.18s; background: transparent;
+    }
+    .check-box svg { display: none; }
+    .check-row.checked .check-box svg { display: block; }
+    .check-text { font-size: 12px; color: var(--dim); line-height: 1.5; transition: color 0.18s; flex: 1; }
+    .check-row.checked .check-text { color: var(--text); }
+    .critical-badge {
+      margin-left: 6px; font-size: 9px; padding: 1px 5px; border-radius: 3px;
+      font-family: 'JetBrains Mono', monospace; font-weight: 700; letter-spacing: 0.5px;
+      display: inline;
     }
 
-    body{
-      background:linear-gradient(to bottom,#f8fafc,#eef2ff);
-      color:var(--text);
-      font-family:Arial, sans-serif;
-      padding:20px;
+    /* ── PILL BUTTONS ── */
+    .pills { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .pill {
+      padding: 6px 14px; border-radius: 100px; border: 1px solid var(--border);
+      background: transparent; color: var(--dim);
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.5px; transition: all 0.2s; white-space: nowrap;
+    }
+    .pill.active-green { border-color: var(--green); background: #05d67a18; color: var(--green); }
+    .pill.active-red { border-color: var(--red); background: #ff3d5a18; color: var(--red); }
+    .pill-small { padding: 4px 10px; font-size: 10px; }
+    .pill-small.active-gold { border-color: var(--gold); background: #ffb83018; color: var(--gold); }
+
+    /* ── TIMEFRAME ROWS ── */
+    .tf-row { padding: 13px 14px; border-bottom: 1px solid var(--border); }
+    .tf-row:last-child { border-bottom: none; }
+    .tf-badge {
+      min-width: 42px; text-align: center; padding: 3px 0;
+      background: var(--dimmer); border: 1px solid var(--border);
+      border-radius: 6px; font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; font-weight: 700; color: var(--dim); display: inline-block;
+    }
+    .tf-badge.primary-intraday { background: #3d9eff20; border-color: #3d9eff50; color: var(--blue); }
+    .tf-badge.primary-swing { background: #a855f720; border-color: #a855f750; color: var(--purple); }
+    .tf-role { font-size: 12px; font-weight: 600; color: var(--text); }
+    .tf-detail { font-size: 11px; color: var(--dim); line-height: 1.6; margin-top: 5px; padding-left: 52px; }
+    .primary-tag {
+      font-size: 9px; padding: 2px 7px; border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace; font-weight: 700;
     }
 
-    .header{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:20px;
-      margin-bottom:20px;
+    /* ── DIFF TABLE ── */
+    .diff-row { display: grid; grid-template-columns: 90px 1fr 1fr; padding: 9px 14px; border-bottom: 1px solid var(--border); font-size: 11px; }
+    .diff-label { color: var(--dim); font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.5px; padding-top: 1px; }
+    .diff-intra { color: var(--blue); font-weight: 600; }
+    .diff-swing { color: var(--dim); }
 
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
+    /* ── SESSIONS ── */
+    .session-row { padding: 13px 14px; border-bottom: 1px solid var(--border); }
+    .session-row:last-child { border-bottom: none; }
+    .session-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .session-time { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--blue); margin: 4px 0; }
+    .session-note { font-size: 11px; color: var(--dim); line-height: 1.5; }
+    .quality-badge {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700;
+      padding: 2px 10px; border-radius: 100px;
     }
 
-    .title{
-      font-size:24px;
-      font-weight:bold;
+    /* ── SLTP FULL TABLE ── */
+    .ins-row { padding: 14px; border-bottom: 1px solid var(--border); }
+    .ins-row:last-child { border-bottom: none; }
+    .ins-name { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px; color: var(--text); margin-bottom: 10px; }
+
+    /* ── PARTIAL CLOSE ── */
+    .partial-row { padding: 11px 14px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: flex-start; }
+    .partial-line { width: 3px; min-height: 36px; border-radius: 2px; background: var(--gold); flex-shrink: 0; margin-top: 2px; }
+    .partial-at { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--gold); margin-bottom: 3px; }
+    .partial-action { font-size: 12px; color: var(--text); margin-bottom: 2px; }
+    .partial-why { font-size: 10px; color: var(--dim); }
+
+    /* ── INFO BOX ── */
+    .info-box { border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+    .info-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 2px; margin-bottom: 6px; }
+    .info-text { font-size: 12px; color: var(--text); line-height: 1.7; }
+
+    /* ── RESET BTN ── */
+    #reset-btn {
+      width: 100%; margin-top: 14px; padding: 13px;
+      background: transparent; border: 1px solid var(--border);
+      border-radius: 10px; color: var(--dim);
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 1px;
+      transition: all 0.2s; margin-bottom: 20px;
     }
+    #reset-btn:hover { border-color: var(--dimmer); color: var(--text); }
 
-    .subtitle{
-      color:var(--dim);
-      margin-top:5px;
-      font-size:14px;
-    }
+    /* ── STEPS ── */
+    .step-row { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .step-num { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; color: var(--blue); opacity: 0.3; min-width: 28px; line-height: 1; }
+    .step-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+    .step-desc { font-size: 11px; color: var(--dim); line-height: 1.6; }
 
-    .mode-buttons{
-      display:flex;
-      gap:10px;
-    }
+    /* ── GRADE TABLE ── */
+    .grade-table-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .grade-table-letter { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px; min-width: 36px; text-align: center; }
+    .grade-table-req { font-size: 11px; color: var(--dim); flex: 1; }
 
-    .mode-btn{
-      padding:10px 18px;
-      border:none;
-      border-radius:999px;
-      cursor:pointer;
-      font-weight:bold;
-      background:var(--dimmer);
-      color:var(--text);
-    }
-
-    .mode-btn.active{
-      background:var(--blue);
-      color:white;
-    }
-
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:20px;
-      margin-bottom:20px;
-    }
-
-    .card-title{
-      font-size:18px;
-      font-weight:bold;
-      margin-bottom:15px;
-    }
-
-    .grade-box{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:20px;
-    }
-
-    .grade{
-      font-size:48px;
-      font-weight:bold;
-      color:var(--green);
-    }
-
-    .percentage{
-      font-size:32px;
-      font-weight:bold;
-    }
-
-    .progress-bg{
-      width:100%;
-      height:10px;
-      background:var(--dimmer);
-      border-radius:999px;
-      overflow:hidden;
-      margin-top:10px;
-    }
-
-    .progress{
-      height:100%;
-      width:0%;
-      background:var(--green);
-      transition:0.3s;
-    }
-
-    .checklist{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-
-    .check-item{
-      background:#f9fafb;
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:14px;
-      display:flex;
-      align-items:center;
-      gap:12px;
-      cursor:pointer;
-      transition:0.2s;
-    }
-
-    .check-item:hover{
-      transform:translateY(-2px);
-    }
-
-    .check-item.checked{
-      background:#ecfdf5;
-      border-color:#a7f3d0;
-    }
-
-    .check-item input{
-      width:20px;
-      height:20px;
-    }
-
-    .badge{
-      background:#dbeafe;
-      color:var(--blue);
-      padding:5px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:bold;
-    }
-
-    .section{
-      margin-top:20px;
-    }
-
-    .info-box{
-      background:#eff6ff;
-      border:1px solid #bfdbfe;
-      padding:16px;
-      border-radius:14px;
-      margin-top:20px;
-    }
-
-    .info-title{
-      font-weight:bold;
-      color:var(--blue);
-      margin-bottom:8px;
-    }
-
-    .reset-btn{
-      width:100%;
-      margin-top:20px;
-      padding:14px;
-      border:none;
-      border-radius:14px;
-      background:var(--red);
-      color:white;
-      font-size:16px;
-      font-weight:bold;
-      cursor:pointer;
-    }
-
-    .reset-btn:hover{
-      opacity:0.9;
-    }
-
-    @media(max-width:768px){
-      .header{
-        flex-direction:column;
-        gap:15px;
-        align-items:flex-start;
-      }
-
-      .grade-box{
-        flex-direction:column;
-        align-items:flex-start;
-        gap:10px;
-      }
+    @media (max-width: 380px) {
+      .diff-row { grid-template-columns: 80px 1fr 1fr; }
     }
   </style>
 </head>
-
 <body>
 
-  <div class="header">
-    <div>
-      <div class="title">⚡ TradeCheck</div>
-      <div class="subtitle">
-        US30 • XAUUSD • NAS100 • USOIL
+<!-- ── APP ROOT ── -->
+<div id="header">
+  <div id="header-top">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="app-icon">⚡</div>
+      <div>
+        <div id="app-title">TRADE CHECKLIST</div>
+        <div id="app-sub">US30 · XAUUSD · NAS100 · USOIL</div>
       </div>
     </div>
-
-    <div class="mode-buttons">
-      <button class="mode-btn active">
-        INTRADAY
-      </button>
-
-      <button class="mode-btn">
-        SWING
-      </button>
+    <div id="mode-toggle">
+      <button class="mode-btn" id="btn-intraday" onclick="setMode('intraday')">INTRADAY</button>
+      <button class="mode-btn" id="btn-swing" onclick="setMode('swing')">SWING</button>
     </div>
   </div>
+  <div id="tabs"></div>
+</div>
 
-  <div class="card">
+<div id="content"></div>
 
-    <div class="card-title">
-      Setup Grade
-    </div>
+<script>
+// ── STATE ────────────────────────────────────────────────────────────
+let state = {
+  mode: 'intraday',
+  tab: 'system',
+  direction: 'long',
+  instrument: 'US30',
+  checks: {}
+};
 
-    <div class="grade-box">
-      <div class="grade" id="grade">
-        A
-      </div>
+// ── DATA ─────────────────────────────────────────────────────────────
+const INTRADAY = {
+  timeframes: [
+    { tf: "Daily", role: "Bias only", detail: "Is price above/below 200 MA? Sets LONG or SHORT bias for the day. Check once at market open. Never trade against it.", primary: false },
+    { tf: "4H", role: "Key levels", detail: "Mark today's 4H pivot clusters. BB position. Where is price in the 4H structure? This is your map.", primary: false },
+    { tf: "15m", role: "Entry anchor ★", detail: "Your PRIMARY entry timeframe for intraday. Wick formations, candle closes at cluster, BB touch. This is where you execute.", primary: true },
+    { tf: "5m", role: "Trigger & timing", detail: "Fine-tune entry. Wait for 5m candle to confirm 15m wick direction. Volume spike must fire on 5m candle.", primary: false },
+  ],
+  sl: { US30: "80–120 pts", XAUUSD: "10–15 pts", NAS100: "100–150 pts", USOIL: "0.40–0.60 pts" },
+  tp: { US30: "200–350 pts", XAUUSD: "30–50 pts", NAS100: "250–400 pts", USOIL: "0.8–1.2 pts" },
+  sessions: [
+    { name: "London Open", time: "8:00–10:00 AM GMT", quality: "A+", note: "Best session. Highest volume spikes. Pivot levels respected sharply." },
+    { name: "NY Open", time: "1:30–3:30 PM GMT", quality: "A+", note: "Second best. Most volatile. Indices and Gold move hard. Your 2x volume fires most here." },
+    { name: "London/NY Overlap", time: "1:00–5:00 PM GMT", quality: "A", note: "Peak liquidity. Strong trending moves. Good for momentum entries." },
+    { name: "Asian Session", time: "11 PM–7 AM GMT", quality: "C", note: "Avoid for intraday. Low volume, choppy, pivots less respected. False signals." },
+    { name: "Late NY / Close", time: "7:00–10 PM GMT", quality: "B-", note: "Fading liquidity. Only trade if strong momentum continuation from NY open." },
+  ]
+};
 
-      <div class="percentage" id="percentage">
-        0%
-      </div>
-    </div>
+const SWING = {
+  timeframes: [
+    { tf: "Weekly", role: "Pivot levels", detail: "Plot 4 DeMark + Classic pivots. Mark clusters. This is your map for the entire week.", primary: false },
+    { tf: "Daily", role: "Trend anchor ★", detail: "200 MA direction = your bias. BB extended? Where is price relative to the week's structure.", primary: true },
+    { tf: "4H", role: "Entry setup", detail: "Wick patterns, cluster approach, BB touch. Where the setup forms.", primary: false },
+    { tf: "1H", role: "Volume trigger", detail: "Telegram 2x alert fires here. Confirms institutions moving. Entry executed after alert.", primary: false },
+  ],
+  sl: { US30: "300–350 pts", XAUUSD: "60–80 pts", NAS100: "400–500 pts", USOIL: "1.5–2.0 pts" },
+  tp: { US30: "700–1000 pts", XAUUSD: "150–300 pts", NAS100: "800–1200 pts", USOIL: "3.0–5.0 pts" }
+};
 
-    <div class="progress-bg">
-      <div class="progress" id="progress"></div>
-    </div>
+const LONG_CHECKS = [
+  { id:"l1", group:"PRE-MARKET (Daily bias)", text:"Daily 200 MA — price is ABOVE it", critical:true },
+  { id:"l2", group:"PRE-MARKET (Daily bias)", text:"Daily bias is BULLISH — confirmed at market open" },
+  { id:"l3", group:"PRE-MARKET (Daily bias)", text:"No major news event in next 2 hours (check economic calendar)" },
+  { id:"l4", group:"SESSION (Choose A+ session only)", text:"Current time is London Open OR NY Open session", critical:true },
+  { id:"l5", group:"SESSION (Choose A+ session only)", text:"NOT trading Asian session (low volume, avoid)" },
+  { id:"l6", group:"ZONE (4H map)", text:"4H pivot cluster identified — price approaching from above (support)" },
+  { id:"l7", group:"ZONE (4H map)", text:"4H BB lower band is near the cluster zone (double confluence)" },
+  { id:"l8", group:"ZONE (4H map)", text:"No major 4H resistance between entry and target" },
+  { id:"l9", group:"ENTRY (15m trigger)", text:"15m candle shows long LOWER wick rejecting cluster zone", critical:true },
+  { id:"l10", group:"ENTRY (15m trigger)", text:"15m candle CLOSES above the cluster zone" },
+  { id:"l11", group:"ENTRY (15m trigger)", text:"BB lower band touched on 15m then price reversed" },
+  { id:"l12", group:"VOLUME (1H/5m confirm)", text:"Telegram alert fired: 2x+ volume 🟩 GREEN direction", critical:true },
+  { id:"l13", group:"VOLUME (1H/5m confirm)", text:"5m candle confirms same direction as 15m wick" },
+  { id:"l14", group:"RISK", text:"Stop loss placed below wick low + instrument buffer" },
+  { id:"l15", group:"RISK", text:"R:R is minimum 2:1 (TP at least 2x the SL distance)" },
+  { id:"l16", group:"RISK", text:"Max 1–2% account risk on this trade" },
+  { id:"l17", group:"RISK", text:"Target is a clear pivot level — not just a random number" },
+];
 
-  </div>
+const SHORT_CHECKS = [
+  { id:"s1", group:"PRE-MARKET (Daily bias)", text:"Daily 200 MA — price is BELOW it", critical:true },
+  { id:"s2", group:"PRE-MARKET (Daily bias)", text:"Daily bias is BEARISH — confirmed at market open" },
+  { id:"s3", group:"PRE-MARKET (Daily bias)", text:"No major news event in next 2 hours (check economic calendar)" },
+  { id:"s4", group:"SESSION (Choose A+ session only)", text:"Current time is London Open OR NY Open session", critical:true },
+  { id:"s5", group:"SESSION (Choose A+ session only)", text:"NOT trading Asian session (low volume, avoid)" },
+  { id:"s6", group:"ZONE (4H map)", text:"4H pivot cluster identified — price approaching from below (resistance)" },
+  { id:"s7", group:"ZONE (4H map)", text:"4H BB upper band is near the cluster zone (double confluence)" },
+  { id:"s8", group:"ZONE (4H map)", text:"No major 4H support between entry and downside target" },
+  { id:"s9", group:"ENTRY (15m trigger)", text:"15m candle shows long UPPER wick rejecting cluster zone", critical:true },
+  { id:"s10", group:"ENTRY (15m trigger)", text:"15m candle CLOSES below the cluster zone" },
+  { id:"s11", group:"ENTRY (15m trigger)", text:"BB upper band touched on 15m then price reversed down" },
+  { id:"s12", group:"VOLUME (1H/5m confirm)", text:"Telegram alert fired: 2x+ volume 🟥 RED direction", critical:true },
+  { id:"s13", group:"VOLUME (1H/5m confirm)", text:"5m candle confirms downward direction" },
+  { id:"s14", group:"RISK", text:"Stop loss placed above wick high + instrument buffer" },
+  { id:"s15", group:"RISK", text:"R:R is minimum 2:1" },
+  { id:"s16", group:"RISK", text:"Max 1–2% account risk on this trade" },
+  { id:"s17", group:"RISK", text:"Target is a clear pivot level support below" },
+];
 
-  <div class="card">
+const INSTRUMENTS = ["US30","XAUUSD","NAS100","USOIL"];
 
-    <div class="card-title">
-      Trading Checklist
-    </div>
+const TABS_INTRADAY = [
+  {id:"system", label:"SYSTEM"},
+  {id:"long", label:"▲ LONG"},
+  {id:"short", label:"▼ SHORT"},
+  {id:"sessions", label:"SESSIONS"},
+  {id:"levels", label:"SL/TP"},
+];
+const TABS_SWING = [
+  {id:"system", label:"SYSTEM"},
+  {id:"long", label:"▲ LONG"},
+  {id:"short", label:"▼ SHORT"},
+  {id:"levels", label:"SL/TP"},
+];
 
-    <div class="checklist">
+// ── HELPERS ──────────────────────────────────────────────────────────
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') el.className = v;
+    else if (k === 'html') el.innerHTML = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2).toLowerCase(), v);
+    else el.setAttribute(k, v);
+  }
+  for (const c of children.flat()) {
+    if (c == null) continue;
+    el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return el;
+}
+function div(attrs, ...children) { return h('div', attrs, ...children); }
+function span(attrs, ...children) { return h('span', attrs, ...children); }
+function btn(attrs, ...children) { return h('button', attrs, ...children); }
 
-      <label class="check-item">
-        <input type="checkbox" class="check" />
-        <span>Daily 200 MA confirms bullish trend</span>
-      </label>
+function qColor(q) {
+  if (q === 'A+') return 'var(--green)';
+  if (q === 'A') return 'var(--blue)';
+  if (q.startsWith('B')) return 'var(--gold)';
+  return 'var(--red)';
+}
 
-      <label class="check-item">
-        <input type="checkbox" class="check" />
-        <span>4H pivot cluster identified</span>
-      </label>
+// ── GRADE LOGIC ──────────────────────────────────────────────────────
+function calcGrade(checked, total) {
+  const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+  if (pct >= 90) return {grade:'A+', color:'var(--green)'};
+  if (pct >= 80) return {grade:'A',  color:'var(--green)'};
+  if (pct >= 70) return {grade:'A-', color:'var(--blue)'};
+  if (pct >= 60) return {grade:'B+', color:'var(--gold)'};
+  if (pct >= 50) return {grade:'B',  color:'var(--gold)'};
+  return {grade:'C', color:'var(--red)'};
+}
 
-      <label class="check-item">
-        <input type="checkbox" class="check" />
-        <span>15m wick rejection confirmed</span>
-      </label>
+// ── RENDERERS ────────────────────────────────────────────────────────
+function renderTabs() {
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = '';
+  const tabs = state.mode === 'intraday' ? TABS_INTRADAY : TABS_SWING;
+  tabs.forEach(t => {
+    const b = btn({
+      class: 'tab-btn' + (state.tab === t.id ? ' active ' + state.mode : ''),
+      onclick: () => { state.tab = t.id; render(); }
+    }, t.label);
+    tabsEl.appendChild(b);
+  });
+}
 
-      <label class="check-item">
-        <input type="checkbox" class="check" />
-        <span>2x volume spike alert triggered</span>
-      </label>
+function renderModeBtns() {
+  const bi = document.getElementById('btn-intraday');
+  const bs = document.getElementById('btn-swing');
+  bi.className = 'mode-btn' + (state.mode === 'intraday' ? ' active-intraday' : '');
+  bs.className = 'mode-btn' + (state.mode === 'swing' ? ' active-swing' : '');
+}
 
-      <label class="check-item">
-        <input type="checkbox" class="check" />
-        <span>Risk Reward ratio above 2:1</span>
-      </label>
+function renderContent() {
+  const el = document.getElementById('content');
+  el.innerHTML = '';
 
-    </div>
+  // Mode banner
+  const isIntra = state.mode === 'intraday';
+  const mColor = isIntra ? 'var(--blue)' : 'var(--purple)';
+  const banner = div({class:'mode-banner', style:`background:${mColor}10;border:1px solid ${mColor}30`},
+    div({},
+      div({class:'mode-banner-label', style:`color:${mColor}`}, isIntra ? '⚡ INTRADAY MODE' : '📈 SWING MODE'),
+      div({class:'mode-banner-sub'}, isIntra ? '15m entry · Same-day close · Session-based' : '4H entry · Days to 2 weeks · Weekly pivots')
+    ),
+    div({class:'mode-banner-tag', style:`color:${mColor};background:${mColor}15`}, isIntra ? '1D CLOSE' : 'HOLD 2W')
+  );
+  el.appendChild(banner);
 
-    <button class="reset-btn" id="resetBtn">
-      RESET CHECKLIST
-    </button>
+  if (state.tab === 'system') el.appendChild(renderSystem());
+  else if (state.tab === 'long') el.appendChild(renderChecklist('long'));
+  else if (state.tab === 'short') el.appendChild(renderChecklist('short'));
+  else if (state.tab === 'sessions' && state.mode === 'intraday') el.appendChild(renderSessions());
+  else if (state.tab === 'levels') el.appendChild(renderLevels());
+}
 
-  </div>
+function renderSystem() {
+  const frag = document.createDocumentFragment();
+  const sys = state.mode === 'intraday' ? INTRADAY : SWING;
+  const isIntra = state.mode === 'intraday';
+  const mColor = isIntra ? 'var(--blue)' : 'var(--purple)';
+  const mClass = isIntra ? 'primary-intraday' : 'primary-swing';
 
-  <div class="card">
+  // Timeframe card
+  const tfCard = div({class:'card'});
+  tfCard.appendChild(div({class:'card-head', style:`background:${mColor}0a;color:${mColor}`}, 'TIMEFRAME STRUCTURE'));
+  sys.timeframes.forEach(t => {
+    const row = div({class:'tf-row', style: t.primary ? `background:${mColor}07` : ''});
+    const top = div({style:'display:flex;align-items:center;gap:10px;'});
+    top.appendChild(span({class:'tf-badge ' + (t.primary ? mClass : '')}, t.tf));
+    top.appendChild(div({style:'flex:1'},
+      div({class:'tf-role'}, t.role)
+    ));
+    if (t.primary) top.appendChild(span({class:'primary-tag', style:`background:${mColor}20;color:${mColor}`}, 'PRIMARY'));
+    row.appendChild(top);
+    row.appendChild(div({class:'tf-detail'}, t.detail));
+    tfCard.appendChild(row);
+  });
+  frag.appendChild(tfCard);
 
-    <div class="card-title">
-      SL / TP Reference
-    </div>
-
-    <div class="section">
-      <span class="badge">US30</span>
-
-      <div style="margin-top:10px;">
-        Stop Loss: 80–120 pts
-      </div>
-
-      <div style="margin-top:5px;">
-        Take Profit: 200–350 pts
-      </div>
-    </div>
-
-    <div class="section">
-      <span class="badge">XAUUSD</span>
-
-      <div style="margin-top:10px;">
-        Stop Loss: 10–15 pts
-      </div>
-
-      <div style="margin-top:5px;">
-        Take Profit: 30–50 pts
-      </div>
-    </div>
-
-  </div>
-
-  <div class="info-box">
-    <div class="info-title">
-      Pro Tip
-    </div>
-
-    <div>
-      Trade only during London Open or NY Open for best volume confirmation and cleaner setups.
-    </div>
-  </div>
-
-  <script>
-
-    const checks = document.querySelectorAll(".check");
-    const progress = document.getElementById("progress");
-    const percentage = document.getElementById("percentage");
-    const grade = document.getElementById("grade");
-    const resetBtn = document.getElementById("resetBtn");
-
-    function updateProgress(){
-
-      let checked = 0;
-
-      checks.forEach(check => {
-
-        if(check.checked){
-          checked++;
-          check.parentElement.classList.add("checked");
-        }else{
-          check.parentElement.classList.remove("checked");
-        }
-
-      });
-
-      const total = checks.length;
-      const percent = Math.round((checked / total) * 100);
-
-      progress.style.width = percent + "%";
-      percentage.innerText = percent + "%";
-
-      if(percent >= 90){
-        grade.innerText = "A+";
-        grade.style.color = "var(--green)";
-      }
-      else if(percent >= 70){
-        grade.innerText = "A";
-        grade.style.color = "var(--blue)";
-      }
-      else if(percent >= 50){
-        grade.innerText = "B";
-        grade.style.color = "var(--gold)";
-      }
-      else{
-        grade.innerText = "C";
-        grade.style.color = "var(--red)";
-      }
-
-    }
-
-    checks.forEach(check => {
-      check.addEventListener("change", updateProgress);
+  // Intraday diff table
+  if (isIntra) {
+    const diffCard = div({class:'card'});
+    diffCard.appendChild(div({class:'card-head', style:'background:var(--gold)0a;color:var(--gold)'}, 'INTRADAY vs SWING — KEY CHANGES'));
+    const diffs = [
+      {label:'Entry TF', intra:'15m (primary)', swing:'4H (primary)'},
+      {label:'Pivot type', intra:'4H pivot clusters', swing:'Weekly DeMark + Classic'},
+      {label:'Volume TF', intra:'5m + 1H alert', swing:'1H alert only'},
+      {label:'Hold time', intra:'Same day exit', swing:'Days to 2 weeks'},
+      {label:'SL US30', intra:'80–120 pts', swing:'300–350 pts'},
+      {label:'TP US30', intra:'200–350 pts', swing:'700–1000 pts'},
+      {label:'Session rule', intra:'London+NY open only', swing:'Any session'},
+      {label:'BB timeframe', intra:'15m bands', swing:'Daily bands'},
+    ];
+    diffs.forEach(d => {
+      const row = div({class:'diff-row'});
+      row.appendChild(div({class:'diff-label'}, d.label));
+      row.appendChild(div({class:'diff-intra'}, d.intra));
+      row.appendChild(div({class:'diff-swing'}, d.swing));
+      diffCard.appendChild(row);
     });
+    frag.appendChild(diffCard);
+  }
 
-    resetBtn.addEventListener("click", () => {
+  // How to use steps
+  const stepCard = div({class:'card'});
+  stepCard.appendChild(div({class:'card-head', style:'color:var(--blue)'}, 'HOW TO USE EACH SESSION'));
+  const steps = isIntra ? [
+    {s:'01', t:'Check Daily at Open', d:'Is price above/below 200 MA? That sets your LONG or SHORT bias for the entire day. Never trade against it.'},
+    {s:'02', t:'Map 4H clusters', d:'Mark 4H pivot cluster zones. Where are the key support/resistance areas today? That\'s where you look for entries.'},
+    {s:'03', t:'Wait for Session', d:'London Open or NY Open only. Do not enter during Asian session — volume is too low for your system to work.'},
+    {s:'04', t:'Watch 15m for wick', d:'Price approaches cluster zone → look for long wick forming on 15m. This is your entry signal.'},
+    {s:'05', t:'Volume confirms', d:'Your Telegram fires 2x+ in correct direction → execute entry. No alert = no entry, even if wick looks perfect.'},
+  ] : [
+    {s:'01', t:'Sunday — plot weekly pivots', d:'Mark all 4 DeMark + Classic pivot levels on every instrument. Identify clusters (2+ levels close together).'},
+    {s:'02', t:'Daily — set bias', d:'Price above 200 MA = long only. Below = short only. Flat/choppy 200 MA = no trade, wait.'},
+    {s:'03', t:'4H — find the setup', d:'Price approaching weekly cluster? Watch for wick forming on 4H. BB outer band touch?'},
+    {s:'04', t:'1H volume trigger', d:'Telegram fires 2x+ in correct direction → confirm entry. Check R:R before executing.'},
+  ];
+  steps.forEach(s => {
+    const row = div({class:'step-row'});
+    row.appendChild(div({class:'step-num'}, s.s));
+    const right = div({});
+    right.appendChild(div({class:'step-title'}, s.t));
+    right.appendChild(div({class:'step-desc'}, s.d));
+    row.appendChild(right);
+    stepCard.appendChild(row);
+  });
+  frag.appendChild(stepCard);
 
-      checks.forEach(check => {
-        check.checked = false;
+  // Golden rule box
+  frag.appendChild(div({class:'info-box', style:'background:var(--gold)0c;border:1px solid var(--gold)30;'},
+    div({class:'info-label', style:'color:var(--gold)'}, 'RULE THAT NEVER CHANGES'),
+    div({class:'info-text'}, 'All 5 parameters apply in both modes. Volume 2x threshold, pivot clusters, long wick, BB, 200 MA — none of these change. Only the timeframes shift down for intraday. The logic is identical.')
+  ));
+
+  return frag;
+}
+
+function renderChecklist(dir) {
+  const frag = document.createDocumentFragment();
+  const checks = dir === 'long' ? LONG_CHECKS : SHORT_CHECKS;
+  const color = dir === 'long' ? 'var(--green)' : 'var(--red)';
+  const colorHex = dir === 'long' ? '#05d67a' : '#ff3d5a';
+
+  // Direction + instrument pills
+  const pillsDiv = div({class:'pills'});
+  const longBtn = btn({
+    class:'pill' + (state.direction==='long'?' active-green':''),
+    onclick:() => { state.direction='long'; state.checks={}; render(); }
+  }, '▲ LONG');
+  const shortBtn = btn({
+    class:'pill' + (state.direction==='short'?' active-red':''),
+    onclick:() => { state.direction='short'; state.checks={}; render(); }
+  }, '▼ SHORT');
+  pillsDiv.appendChild(longBtn);
+  pillsDiv.appendChild(shortBtn);
+  pillsDiv.appendChild(div({style:'flex:1'}));
+  INSTRUMENTS.forEach(ins => {
+    pillsDiv.appendChild(btn({
+      class:'pill pill-small' + (state.instrument===ins?' active-gold':''),
+      onclick:() => { state.instrument=ins; render(); }
+    }, ins));
+  });
+  frag.appendChild(pillsDiv);
+
+  // Grade meter
+  const checkedCount = checks.filter(c => state.checks[c.id]).length;
+  const total = checks.length;
+  const pct = Math.round((checkedCount/total)*100);
+  const {grade, color: gColor} = calcGrade(checkedCount, total);
+
+  const gradeCard = div({id:'grade-card'});
+  const gradeTop = div({id:'grade-top'});
+  const gradeLeft = div({});
+  gradeLeft.appendChild(div({id:'grade-label'}, 'SETUP GRADE'));
+  gradeLeft.appendChild(div({id:'grade-letter', style:`color:${gColor};text-shadow:0 0 30px ${gColor}40`}, grade));
+  gradeTop.appendChild(gradeLeft);
+  const gradeRight = div({});
+  gradeRight.appendChild(div({id:'grade-count', html:`${checkedCount}<span style="font-size:14px;color:var(--dim)">/${total}</span>`}));
+  gradeRight.appendChild(div({id:'grade-pct'}, `${pct}% COMPLETE`));
+  gradeTop.appendChild(gradeRight);
+  gradeCard.appendChild(gradeTop);
+  const barBg = div({id:'grade-bar-bg'});
+  barBg.appendChild(div({id:'grade-bar', style:`width:${pct}%;background:linear-gradient(90deg,${gColor}80,${gColor})`}));
+  gradeCard.appendChild(barBg);
+  const msg = div({id:'grade-msg'});
+  if (pct < 70) msg.style.color='var(--red)', msg.textContent='⚠ Below 70% — DO NOT ENTER';
+  else if (pct < 85) msg.style.color='var(--gold)', msg.textContent='Proceed with caution — reduce position size';
+  else msg.style.color='var(--green)', msg.textContent='✓ Strong setup — full confidence entry';
+  gradeCard.appendChild(msg);
+  frag.appendChild(gradeCard);
+
+  // SL/TP quick ref
+  const sys = state.mode === 'intraday' ? INTRADAY : SWING;
+  const sltp = div({class:'sltp-grid'});
+  const slBox = div({class:'sltp-box', style:`background:var(--red)0d;border:1px solid var(--red)25`});
+  slBox.appendChild(div({class:'sltp-label', style:'color:var(--red)'}, 'STOP LOSS'));
+  slBox.appendChild(div({class:'sltp-val'}, sys.sl[state.instrument]));
+  const tpBox = div({class:'sltp-box', style:`background:var(--green)0d;border:1px solid var(--green)25`});
+  tpBox.appendChild(div({class:'sltp-label', style:'color:var(--green)'}, 'TAKE PROFIT'));
+  tpBox.appendChild(div({class:'sltp-val'}, sys.tp[state.instrument]));
+  sltp.appendChild(slBox); sltp.appendChild(tpBox);
+  frag.appendChild(sltp);
+
+  // Group checks
+  const grouped = {};
+  checks.forEach(c => { if (!grouped[c.group]) grouped[c.group]=[]; grouped[c.group].push(c); });
+
+  Object.entries(grouped).forEach(([group, items]) => {
+    // Section divider
+    const div2 = div({class:'section-divider'});
+    div2.appendChild(div({class:'divider-line'}));
+    div2.appendChild(span({class:'divider-label', style:`color:${color}`}, group));
+    div2.appendChild(div({class:'divider-line'}));
+    frag.appendChild(div2);
+
+    items.forEach(item => {
+      const checked = !!state.checks[item.id];
+      const row = div({class:'check-row' + (checked?' checked':'')});
+      if (checked) {
+        row.style.background = colorHex + '09';
+        row.style.borderColor = colorHex + '25';
+      }
+
+      const box = div({class:'check-box'});
+      if (checked) {
+        box.style.borderColor = colorHex;
+        box.style.background = colorHex;
+      }
+      const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('width','11'); svg.setAttribute('height','9'); svg.setAttribute('viewBox','0 0 11 9'); svg.setAttribute('fill','none');
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d','M1 4L4 7L10 1'); path.setAttribute('stroke','#000'); path.setAttribute('stroke-width','2'); path.setAttribute('stroke-linecap','round'); path.setAttribute('stroke-linejoin','round');
+      svg.appendChild(path);
+      if (checked) box.appendChild(svg);
+      row.appendChild(box);
+
+      const textWrap = div({class:'check-text'});
+      textWrap.textContent = item.text;
+      if (item.critical) {
+        textWrap.appendChild(span({
+          class:'critical-badge',
+          style:`background:${colorHex}20;color:${colorHex}`
+        }, 'CRITICAL'));
+      }
+      row.appendChild(textWrap);
+
+      row.addEventListener('click', () => {
+        state.checks[item.id] = !state.checks[item.id];
+        render();
       });
-
-      updateProgress();
-
+      frag.appendChild(row);
     });
+  });
 
-    updateProgress();
+  // Reset
+  const resetBtn = btn({id:'reset-btn', onclick:() => { state.checks={}; render(); }}, 'RESET CHECKLIST');
+  frag.appendChild(resetBtn);
 
-  </script>
+  return frag;
+}
 
+function renderSessions() {
+  const frag = document.createDocumentFragment();
+
+  const card = div({class:'card'});
+  card.appendChild(div({class:'card-head', style:'background:var(--blue)0a;color:var(--blue)'}, 'TRADING SESSIONS'));
+
+  INTRADAY.sessions.forEach((s, i) => {
+    const qc = qColor(s.quality);
+    const row = div({class:'session-row', style:`border-left:3px solid ${qc};${s.quality==='A+' ? 'background:'+qc+'06' : ''}`});
+    const top = div({style:'display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;'});
+    top.appendChild(div({class:'session-name'}, s.name));
+    top.appendChild(span({class:'quality-badge', style:`color:${qc};background:${qc}18;border:1px solid ${qc}40`}, s.quality));
+    row.appendChild(top);
+    row.appendChild(div({class:'session-time'}, s.time));
+    row.appendChild(div({class:'session-note'}, s.note));
+    card.appendChild(row);
+  });
+  frag.appendChild(card);
+
+  frag.appendChild(div({class:'info-box', style:'background:var(--red)0c;border:1px solid var(--red)30;'},
+    div({class:'info-label', style:'color:var(--red)'}, 'INTRADAY IRON RULE'),
+    div({class:'info-text', html:'<strong>Close ALL intraday positions before market close.</strong> Never hold an intraday setup overnight. If your TP hasn\'t hit by 30 minutes before session close — exit at market. Overnight gaps will destroy your tight intraday SL.'})
+  ));
+
+  return frag;
+}
+
+function renderLevels() {
+  const frag = document.createDocumentFragment();
+  const sys = state.mode === 'intraday' ? INTRADAY : SWING;
+  const isIntra = state.mode === 'intraday';
+
+  // Full SL/TP table
+  const card = div({class:'card'});
+  const head = div({class:'card-head'});
+  head.innerHTML = `<span style="color:var(--dim)">STOP LOSS / </span><span style="color:var(--gold)">TAKE PROFIT REFERENCE</span>`;
+  head.style.borderBottom = '1px solid var(--border)';
+  card.appendChild(head);
+  card.appendChild(div({style:'font-size:10px;color:var(--dim);padding:8px 14px 0'}, isIntra ? 'Intraday — same day exits, tight stops' : 'Swing — multi-day holds, wider stops'));
+
+  INSTRUMENTS.forEach((ins, i) => {
+    const row = div({class:'ins-row'});
+    row.appendChild(div({class:'ins-name'}, ins));
+    const grid = div({style:'display:grid;grid-template-columns:1fr 1fr;gap:8px;'});
+    const slB = div({style:'background:var(--red)0d;border:1px solid var(--red)20;border-radius:8px;padding:10px;'});
+    slB.appendChild(div({style:'font-size:9px;color:var(--red);letter-spacing:1.5px;font-family:"JetBrains Mono",monospace;margin-bottom:4px;'}, 'STOP LOSS'));
+    slB.appendChild(div({style:'font-family:"JetBrains Mono",monospace;font-weight:700;font-size:13px;color:var(--text);'}, sys.sl[ins]));
+    slB.appendChild(div({style:'font-size:9px;color:var(--dim);margin-top:4px;'}, 'Below wick low'));
+    const tpB = div({style:'background:var(--green)0d;border:1px solid var(--green)20;border-radius:8px;padding:10px;'});
+    tpB.appendChild(div({style:'font-size:9px;color:var(--green);letter-spacing:1.5px;font-family:"JetBrains Mono",monospace;margin-bottom:4px;'}, 'TAKE PROFIT'));
+    tpB.appendChild(div({style:'font-family:"JetBrains Mono",monospace;font-weight:700;font-size:13px;color:var(--text);'}, sys.tp[ins]));
+    tpB.appendChild(div({style:'font-size:9px;color:var(--dim);margin-top:4px;'}, 'Next pivot level'));
+    grid.appendChild(slB); grid.appendChild(tpB);
+    row.appendChild(grid);
+    card.appendChild(row);
+  });
+  frag.appendChild(card);
+
+  // Partial close
+  const pcCard = div({class:'card'});
+  pcCard.appendChild(div({class:'card-head', style:'background:var(--gold)0a;color:var(--gold)'}, 'PARTIAL CLOSE STRATEGY'));
+  const partials = isIntra ? [
+    {at:'50% of TP hit', action:'Close 50% of position', why:'Lock profit, reduce risk'},
+    {at:'Move SL to breakeven', action:'After 50% closed', why:'Trade cannot become a loss'},
+    {at:'30 min before session close', action:'Exit remaining position', why:'Never hold intraday overnight'},
+  ] : [
+    {at:'Target 1 hit (first pivot)', action:'Close 40–50% of position', why:'Lock profit, free mental capital'},
+    {at:'Move SL to breakeven', action:'After T1 closed', why:'Trade cannot become a loss'},
+    {at:'Sunday pivot reset', action:'Check if new pivots conflict with T2', why:'Adjust target if needed'},
+    {at:'Opposite 2x volume spike', action:'Consider early full exit', why:'Institutions reversing = warning'},
+  ];
+  partials.forEach(p => {
+    const row = div({class:'partial-row'});
+    row.appendChild(div({class:'partial-line'}));
+    const right = div({});
+    right.appendChild(div({class:'partial-at'}, p.at));
+    right.appendChild(div({class:'partial-action'}, p.action));
+    right.appendChild(div({class:'partial-why'}, p.why));
+    row.appendChild(right);
+    pcCard.appendChild(row);
+  });
+  frag.appendChild(pcCard);
+
+  // Grade table
+  const gtCard = div({class:'card'});
+  gtCard.appendChild(div({class:'card-head', style:'color:var(--dim)'}, 'GRADE SCORING REFERENCE'));
+  const gtBody = div({style:'padding:12px 14px'});
+  [
+    {grade:'A+', req:'All 5 params ✅ · Volume 2.0x+ · R:R 2.5:1+ · With-trend', col:'#00e87a'},
+    {grade:'A',  req:'4/5 params ✅ · Volume 2.0x+ · R:R 2.0:1+ · With-trend', col:'#4ade80'},
+    {grade:'A-', req:'4/5 params ✅ · Volume 1.8x+ · R:R 1.8:1+', col:'#86efac'},
+    {grade:'B+', req:'3/5 params ✅ · Volume confirmed · R:R 1.5:1+', col:'#fbbf24'},
+    {grade:'B',  req:'3/5 params ✅ · Volume borderline · Caution', col:'#f59e0b'},
+    {grade:'C',  req:'2 or fewer params · SKIP — no trade', col:'#f87171'},
+  ].forEach(g => {
+    const row = div({class:'grade-table-row'});
+    row.appendChild(div({class:'grade-table-letter', style:`color:${g.col}`}, g.grade));
+    row.appendChild(div({class:'grade-table-req'}, g.req));
+    gtBody.appendChild(row);
+  });
+  gtCard.appendChild(gtBody);
+  frag.appendChild(gtCard);
+
+  // RR box
+  frag.appendChild(div({class:'info-box', style:'background:var(--green)0c;border:1px solid var(--green)30;'},
+    div({class:'info-label', style:'color:var(--green)'}, 'R:R TARGET'),
+    div({class:'info-text', html:'Minimum <strong style="color:var(--green)">2:1 R:R</strong> for any trade in both modes. Below 2:1 = skip — the math does not work long-term. A+ setups target <strong style="color:var(--green)">3:1 or better.</strong>'})
+  ));
+
+  return frag;
+}
+
+// ── ACTIONS ──────────────────────────────────────────────────────────
+function setMode(m) {
+  state.mode = m;
+  state.tab = 'system';
+  state.checks = {};
+  render();
+}
+
+function render() {
+  renderModeBtns();
+  renderTabs();
+  renderContent();
+}
+
+// ── SERVICE WORKER (offline support) ─────────────────────────────────
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'tradecheck-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html'])));
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+    });
+  `;
+  const swBlob = new Blob([swCode], {type: 'application/javascript'});
+  const swURL = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swURL).catch(() => {});
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────
+render();
+
+// Install prompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const installBar = div({
+    style:`position:fixed;bottom:0;left:0;right:0;background:#ffffff;border-top:1px solid #e0e2ef;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;z-index:999;padding-bottom:calc(12px + env(safe-area-inset-bottom))`
+  },
+    div({},
+      div({style:'font-family:"JetBrains Mono",monospace;font-size:11px;color:#0e1018;font-weight:700'}, '⚡ Install TradeCheck'),
+      div({style:'font-size:10px;color:#7a7e9a;margin-top:2px'}, 'Add to home screen for offline access')
+    ),
+    btn({
+      style:`background:var(--gold);color:#000;border:none;border-radius:8px;padding:8px 16px;font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:700;cursor:pointer`,
+      onclick: async () => {
+        deferredPrompt.prompt();
+        const {outcome} = await deferredPrompt.userChoice;
+        installBar.remove();
+      }
+    }, 'INSTALL')
+  );
+  document.body.appendChild(installBar);
+});
+</script>
 </body>
 </html>
